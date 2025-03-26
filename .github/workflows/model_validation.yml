@@ -47,11 +47,12 @@ jobs:
     # Step 6: Generate Test Report from JSON results
     - name: Generate Test Report
       if: always()
+      shell: bash
       run: |
         if [ -f test_results.json ]; then
           echo "## Model Validation Results" >> $GITHUB_STEP_SUMMARY
           echo "### Architecture Tests" >> $GITHUB_STEP_SUMMARY
-          python3 << 'END_PYTHON' >> $GITHUB_STEP_SUMMARY
+          cat << 'END_PYTHON' | python3 >> $GITHUB_STEP_SUMMARY
           import json
           with open('test_results.json') as f:
               results = json.load(f)
