@@ -1,86 +1,128 @@
-# Name of the workflow that appears in GitHub Actions tab
 name: Model Requirements Validation
 
-# Defines when the workflow will run
-on: [push, pull_request]  # Triggers on both push events and pull requests
+on: [push, pull_request]
 
 jobs:
-  test:  # Job ID
-    runs-on: ubuntu-latest  # Specifies the runner environment
-    
-    # Add permissions for writing to the workspace
+  test:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-      # Add permission for uploading artifacts
       actions: write
-    
+
     steps:
-    # Step 1: Check out the repository code
-    - uses: actions/checkout@v3  # Latest stable version
-    
-    # Step 2: Set up Python environment with pip caching
-    - name: Set up Python
-      uses: actions/setup-python@v4  # Latest stable version
-      with:
-        python-version: '3.8'  # Specify Python version
-        cache: pip  # Enable pip caching
-        cache-dependency-path: |
-          requirements.txt
-        
-    # Step 3: Install project dependencies
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip  # Upgrade pip
-        pip install -r requirements.txt  # Install project requirements
-        
-    # Step 4: Prepare data directory
-    - name: Create data directory
-      run: |
-        mkdir -p data
-        
-    # Step 5: Run all tests
-    - name: Run Model Tests
-      id: run_tests
-      run: |
-        python -m unittest test_model.py -v
-        
-    # Step 6: Generate Test Report from JSON results
-    - name: Generate Test Report
-      if: always()
-      shell: bash
-      run: |
-        if [ -f test_results.json ]; then
-          echo "## Model Validation Results" >> $GITHUB_STEP_SUMMARY
-          echo "### Architecture Tests" >> $GITHUB_STEP_SUMMARY
-          cat << 'END_PYTHON' | python3 >> $GITHUB_STEP_SUMMARY
-          import json
-          with open('test_results.json') as f:
-              results = json.load(f)
+      - uses: actions/checkout@v3
 
-          arch = results['architecture']
-          perf = results['performance']
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+          cache: pip
+          cache-dependency-path: requirements.txt
 
-          # Architecture Section
-          print(f"- Parameter Count: {arch['parameter_count']:,} ✓" if arch['parameter_count'] < 20000 else "- Parameter Count: ❌ Exceeds 20k")
-          print(f"- Batch Normalization Layers: {arch['batch_norm_count']} ✓")
-          print(f"- Dropout Probability: {arch['dropout_probs'][0]} ✓")
-          print(f"- Architecture: {'FC' if arch['has_fc'] else 'GAP'} ✓")
-          print(f"- Output Shape: {arch['output_shape']} ✓")
-          print("\n### Performance Tests")
-          print(f"- Device: {perf['device']}")
-          print(f"- Inference Time: {perf['inference_time']}ms ✓")
-          print(f"- Valid Probabilities: {'✓' if perf['valid_probabilities'] else '❌'}")
-          print(f"- Model Stability: {'✓' if perf['model_stability'] else '❌'}")
-          END_PYTHON
-        else
-          echo "⚠️ No test results file found" >> $GITHUB_STEP_SUMMARY
-        fi
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    # Step 7: Upload test results as artifact
-    - name: Upload Test Results
-      if: always()
-      uses: actions/upload-artifact@main  # Using main branch version
-      with:
-        name: test-results
-        path: test_results.json
-        retention-days: 90  # Keep artifacts for 90 days 
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Run Model Tests
+        id: run_tests
+        run: python -m unittest test_model.py -v
+
+      - name: Generate Test Report
+        if: always()
+        shell: bash
+        run: |
+          if [ -f test_results.json ]; then
+            echo "## Model Validation Results" >> "$GITHUB_STEP_SUMMARY"
+            echo "### Architecture Tests" >> "$GITHUB_STEP_SUMMARY"
+            python3 << 'END_PYTHON' >> "$GITHUB_STEP_SUMMARY"
+import json
+
+try:
+    with open('test_results.json', 'r') as f:
+        results = json.load(f)
+
+    arch = results.get('architecture', {})
+    perf = results.get('performance', {})
+
+    # Architecture Section
+    param_count = arch.get('parameter_count', None)
+    if param_count is not None:
+        print(f"- Parameter Count: {param_count:,} {'✓' if param_count < 20000 else '❌ Exceeds 20k'}")
+    else:
+        print("- Parameter Count: N/A")
+
+    batch_norm_count = arch.get('batch_norm_count', None)
+    if batch_norm_count is not None:
+        print(f"- Batch Normalization Layers: {batch_norm_count} ✓")
+    else:
+        print("- Batch Normalization Layers: N/A")
+
+    dropout_probs = arch.get('dropout_probs', [None])
+    if dropout_probs[0] is not None:
+        print(f"- Dropout Probability: {dropout_probs[0]} ✓")
+    else:
+        print("- Dropout Probability: N/A")
+
+    has_fc = arch.get('has_fc', None)
+    if has_fc is not None:
+        print(f"- Architecture: {'FC' if has_fc else 'GAP'} ✓")
+    else:
+        print("- Architecture: N/A")
+
+    output_shape = arch.get('output_shape', None)
+    if output_shape is not None:
+        print(f"- Output Shape: {output_shape} ✓")
+    else:
+        print("- Output Shape: N/A")
+
+    print("\n### Performance Tests")
+
+    device = perf.get('device', None)
+    if device is not None:
+        print(f"- Device: {device}")
+    else:
+        print("- Device: N/A")
+
+    inference_time = perf.get('inference_time', None)
+    if inference_time is not None:
+        print(f"- Inference Time: {inference_time}ms ✓")
+    else:
+        print("- Inference Time: N/A")
+
+    valid_probabilities = perf.get('valid_probabilities', None)
+    if valid_probabilities is not None:
+        print(f"- Valid Probabilities: {'✓' if valid_probabilities else '❌'}")
+    else:
+        print("- Valid Probabilities: N/A")
+
+    model_stability = perf.get('model_stability', None)
+    if model_stability is not None:
+        print(f"- Model Stability: {'✓' if model_stability else '❌'}")
+    else:
+        print("- Model Stability: N/A")
+
+except FileNotFoundError:
+    print("Error: test_results.json not found.")
+
+except json.JSONDecodeError:
+    print("Error: Invalid JSON format in test_results.json.")
+
+except KeyError as e:
+    print(f"Error: Key '{e}' not found in test_results.json.")
+
+END_PYTHON
+          else
+            echo "⚠️ No test results file found" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test_results.json
+          retention-days: 90
