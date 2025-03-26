@@ -33,12 +33,11 @@ jobs:
 
       - name: Generate Test Report
         if: always()
-        shell: bash
         run: |
           if [ -f test_results.json ]; then
             echo "## Model Validation Results" >> "$GITHUB_STEP_SUMMARY"
             echo "### Architecture Tests" >> "$GITHUB_STEP_SUMMARY"
-            python3 << 'END_PYTHON' >> "$GITHUB_STEP_SUMMARY"
+            python3 > report.py << 'EOL'
 import json
 
 try:
@@ -106,7 +105,8 @@ try:
         print("- Model Stability: N/A")
 except Exception as e:
     print(f"Error processing test results: {e}")
-END_PYTHON
+EOL
+            python3 report.py >> "$GITHUB_STEP_SUMMARY"
           else
             echo "⚠️ No test results file found" >> "$GITHUB_STEP_SUMMARY"
           fi
