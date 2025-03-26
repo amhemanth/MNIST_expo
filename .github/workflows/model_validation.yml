@@ -105,16 +105,7 @@ try:
     else:
         print("- Model Stability: N/A")
 
-except FileNotFoundError:
-    print("Error: test_results.json not found.")
-
-except json.JSONDecodeError:
-    print("Error: Invalid JSON format in test_results.json.")
-
-except KeyError as e:
-    print(f"Error: Key '{e}' not found in test_results.json.")
-
-END_PYTHON
+    END_PYTHON # Correct indentation here
           else
             echo "⚠️ No test results file found" >> "$GITHUB_STEP_SUMMARY"
           fi
