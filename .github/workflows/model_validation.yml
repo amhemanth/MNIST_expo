@@ -34,96 +34,50 @@ jobs:
       run: |
         mkdir -p data
         
-    # Step 5: Run architecture validation tests
-    - name: Run Model Architecture Tests
+    # Step 5: Run all tests
+    - name: Run Model Tests
+      id: run_tests
       run: |
-        echo "Running architecture validation tests..."
-        # Run only architecture-related tests with verbose output
-        python -m unittest test_model.py -k TestModelArchitecture -v
+        python -m unittest test_model.py -v
         
-    # Step 6: Run performance validation tests
-    - name: Run Model Performance Tests
-      run: |
-        echo "Running performance validation tests..."
-        # Run only performance-related tests with verbose output
-        python -m unittest test_model.py -k TestModelPerformance -v
-        
-    # Step 7: Perform static analysis of the model
-    - name: Static Model Validation
-      run: |
-        # Execute Python code directly in the workflow
-        python - <<EOF
-        import torch
-        from model import Net
-        
-        def validate_model():
-            print("Starting static model validation...")
-            model = Net()
-            
-            # 1. Parameter Count Check
-            # Ensure model has less than 20k parameters
-            param_count = sum(p.numel() for p in model.parameters())
-            print(f"\nTotal parameters: {param_count:,}")
-            assert param_count < 20000, f"Model has {param_count:,} parameters, exceeding limit of 20,000"
-            print("✓ Parameter count is within limit")
-            
-            # 2. Architecture Components Check
-            # Track presence of required components
-            found_components = {
-                'batch_norm': False,
-                'dropout': False,
-                'fc_or_gap': False
-            }
-            
-            # Iterate through model layers to check for required components
-            for module in model.modules():
-                if isinstance(module, torch.nn.BatchNorm2d):
-                    found_components['batch_norm'] = True
-                elif isinstance(module, torch.nn.Dropout):
-                    found_components['dropout'] = True
-                elif isinstance(module, (torch.nn.Linear, torch.nn.AdaptiveAvgPool2d)):
-                    found_components['fc_or_gap'] = True
-            
-            # Validate all required components are present
-            assert found_components['batch_norm'], "Missing Batch Normalization"
-            assert found_components['dropout'], "Missing Dropout"
-            assert found_components['fc_or_gap'], "Missing FC layer or GAP"
-            
-            print("\nArchitecture Requirements:")
-            print("✓ Has Batch Normalization")
-            print("✓ Has Dropout")
-            print("✓ Has FC layer or GAP")
-            
-            # 3. Basic Forward Pass Check
-            # Verify model can process MNIST-shaped input
-            x = torch.randn(1, 1, 28, 28)
-            try:
-                output = model(x)
-                assert output.shape == (1, 10), f"Wrong output shape: {output.shape}"
-                print("\n✓ Forward pass successful")
-            except Exception as e:
-                raise AssertionError(f"Forward pass failed: {str(e)}")
-            
-            print("\n✓ All validation checks passed!")
-            return True
-        
-        if __name__ == "__main__":
-            validate_model()
-        EOF
-
-    # Step 8: Generate a summary report of all tests
-    # This step runs even if previous steps fail (if: always())
+    # Step 6: Generate Test Report from JSON results
     - name: Generate Test Report
       if: always()
       run: |
-        # Write test results to GitHub Actions summary
-        echo "## Model Validation Results" >> $GITHUB_STEP_SUMMARY
-        echo "### Architecture Tests" >> $GITHUB_STEP_SUMMARY
-        echo "✓ Parameter count" >> $GITHUB_STEP_SUMMARY
-        echo "✓ Batch Normalization" >> $GITHUB_STEP_SUMMARY
-        echo "✓ Dropout" >> $GITHUB_STEP_SUMMARY
-        echo "✓ FC/GAP presence" >> $GITHUB_STEP_SUMMARY
-        echo "### Performance Tests" >> $GITHUB_STEP_SUMMARY
-        echo "✓ Model stability" >> $GITHUB_STEP_SUMMARY
-        echo "✓ Inference speed" >> $GITHUB_STEP_SUMMARY
-        echo "✓ Output validation" >> $GITHUB_STEP_SUMMARY 
+        if [ -f test_results.json ]; then
+          echo "## Model Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "### Architecture Tests" >> $GITHUB_STEP_SUMMARY
+          
+          # Read and format architecture results
+          python3 - <<EOF
+          import json
+          with open('test_results.json') as f:
+              results = json.load(f)
+          
+          arch = results['architecture']
+          perf = results['performance']
+          
+          # Architecture Section
+          print(f"- Parameter Count: {arch['parameter_count']:,} ✓" if arch['parameter_count'] < 20000 else "- Parameter Count: ❌ Exceeds 20k")
+          print(f"- Batch Normalization Layers: {arch['batch_norm_count']} ✓")
+          print(f"- Dropout Probability: {arch['dropout_probs'][0]} ✓")
+          print(f"- Architecture: {'FC' if arch['has_fc'] else 'GAP'} ✓")
+          print(f"- Output Shape: {arch['output_shape']} ✓")
+          print("\n### Performance Tests")
+          print(f"- Device: {perf['device']}")
+          print(f"- Inference Time: {perf['inference_time']}ms ✓")
+          print(f"- Valid Probabilities: {'✓' if perf['valid_probabilities'] else '❌'}")
+          print(f"- Model Stability: {'✓' if perf['model_stability'] else '❌'}")
+          EOF
+          
+        else
+          echo "⚠️ No test results file found" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    # Step 7: Upload test results as artifact
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: test_results.json 
