@@ -11,14 +11,16 @@ jobs:
     # Add permissions for writing to the workspace
     permissions:
       contents: write
+      # Add permission for uploading artifacts
+      actions: write
     
     steps:
     # Step 1: Check out the repository code
-    - uses: actions/checkout@v2  # Using v2 for compatibility
+    - uses: actions/checkout@v3  # Latest stable version
     
     # Step 2: Set up Python environment with pip caching
     - name: Set up Python
-      uses: actions/setup-python@v2  # Using v2 for compatibility
+      uses: actions/setup-python@v4  # Latest stable version
       with:
         python-version: '3.8'  # Specify Python version
         cache: pip  # Enable pip caching
@@ -79,7 +81,8 @@ jobs:
     # Step 7: Upload test results as artifact
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v2  # Using v2 for compatibility
+      uses: actions/upload-artifact@v3  # Latest stable version
       with:
         name: test-results
-        path: test_results.json 
+        path: test_results.json
+        retention-days: 90  # Keep artifacts for 90 days 
