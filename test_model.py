@@ -1,6 +1,7 @@
 import unittest
 import torch
 import torch.nn as nn
+import time
 from model import Net
 from torchvision import datasets, transforms
 
@@ -81,20 +82,26 @@ class TestModelPerformance(unittest.TestCase):
         self.model.eval()
         data, _ = next(iter(self.test_loader))
         data = data.to(self.device)
-        
-        start_time = torch.cuda.Event(enable_timing=True)
-        end_time = torch.cuda.Event(enable_timing=True)
-        
-        start_time.record()
+
+        # Warm-up run
         with torch.no_grad():
             _ = self.model(data)
-        end_time.record()
+
+        # Measure time using time.perf_counter for both CPU and GPU
+        start_time = time.perf_counter()
+        with torch.no_grad():
+            _ = self.model(data)
+        if self.device.type == "cuda":
+            torch.cuda.synchronize()  # Wait for GPU to finish
+        end_time = time.perf_counter()
         
-        torch.cuda.synchronize()
-        inference_time = start_time.elapsed_time(end_time)
+        inference_time = (end_time - start_time) * 1000  # Convert to milliseconds
         
-        self.assertLess(inference_time, 100, f"Inference took {inference_time}ms, should be less than 100ms")
-        print(f"\nBatch inference time: {inference_time:.2f}ms")
+        # More lenient time check for CPU
+        time_limit = 1000 if self.device.type == "cpu" else 100
+        self.assertLess(inference_time, time_limit, 
+                       f"Inference took {inference_time:.2f}ms, should be less than {time_limit}ms on {self.device.type}")
+        print(f"\nBatch inference time on {self.device.type}: {inference_time:.2f}ms")
 
     def test_model_stability(self):
         """Test if model gives consistent outputs"""
