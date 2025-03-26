@@ -51,16 +51,14 @@ jobs:
         if [ -f test_results.json ]; then
           echo "## Model Validation Results" >> $GITHUB_STEP_SUMMARY
           echo "### Architecture Tests" >> $GITHUB_STEP_SUMMARY
-          
-          # Read and format architecture results
-          python3 - <<EOF
+          python3 << 'END_PYTHON' >> $GITHUB_STEP_SUMMARY
           import json
           with open('test_results.json') as f:
               results = json.load(f)
-          
+
           arch = results['architecture']
           perf = results['performance']
-          
+
           # Architecture Section
           print(f"- Parameter Count: {arch['parameter_count']:,} ✓" if arch['parameter_count'] < 20000 else "- Parameter Count: ❌ Exceeds 20k")
           print(f"- Batch Normalization Layers: {arch['batch_norm_count']} ✓")
@@ -72,8 +70,7 @@ jobs:
           print(f"- Inference Time: {perf['inference_time']}ms ✓")
           print(f"- Valid Probabilities: {'✓' if perf['valid_probabilities'] else '❌'}")
           print(f"- Model Stability: {'✓' if perf['model_stability'] else '❌'}")
-          EOF
-          
+          END_PYTHON
         else
           echo "⚠️ No test results file found" >> $GITHUB_STEP_SUMMARY
         fi
