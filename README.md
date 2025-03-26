@@ -1,5 +1,7 @@
 # MNIST Model with Specific Requirements
 
+[![Model Requirements Validation](https://github.com/amhemanth/MNIST_expo/actions/workflows/model_validation.yml/badge.svg)](https://github.com/amhemanth/MNIST_expo/actions/workflows/model_validation.yml)
+
 This project implements a PyTorch model for MNIST classification that meets the following requirements:
 
 - Achieves 99.4% validation/test accuracy (using 50k/10k split)
