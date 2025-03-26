@@ -31,78 +31,77 @@ jobs:
         id: run_tests
         run: python -m unittest test_model.py -v
 
-      - name: Create Results Processing Script
+      - name: Create Report Script
         if: always()
+        shell: bash
         run: |
-          cat > process_results.py << 'ENDOFSCRIPT'
-#!/usr/bin/env python3
-import json
-try:
-    with open("test_results.json", "r") as f:
-        results = json.load(f)
-
-    arch = results.get("architecture", {})
-    perf = results.get("performance", {})
-
-    # Architecture Section
-    param_count = arch.get("parameter_count", None)
-    if param_count is not None:
-        print(f"- Parameter Count: {param_count:,} {'✓' if param_count < 20000 else '❌ Exceeds 20k'}")
-    else:
-        print("- Parameter Count: N/A")
-
-    batch_norm_count = arch.get("batch_norm_count", None)
-    if batch_norm_count is not None:
-        print(f"- Batch Normalization Layers: {batch_norm_count} ✓")
-    else:
-        print("- Batch Normalization Layers: N/A")
-
-    dropout_probs = arch.get("dropout_probs", [None])
-    if dropout_probs[0] is not None:
-        print(f"- Dropout Probability: {dropout_probs[0]} ✓")
-    else:
-        print("- Dropout Probability: N/A")
-
-    has_fc = arch.get("has_fc", None)
-    if has_fc is not None:
-        print(f"- Architecture: {'FC' if has_fc else 'GAP'} ✓")
-    else:
-        print("- Architecture: N/A")
-
-    output_shape = arch.get("output_shape", None)
-    if output_shape is not None:
-        print(f"- Output Shape: {output_shape} ✓")
-    else:
-        print("- Output Shape: N/A")
-
-    print("\n### Performance Tests")
-
-    device = perf.get("device", None)
-    if device is not None:
-        print(f"- Device: {device}")
-    else:
-        print("- Device: N/A")
-
-    inference_time = perf.get("inference_time", None)
-    if inference_time is not None:
-        print(f"- Inference Time: {inference_time}ms ✓")
-    else:
-        print("- Inference Time: N/A")
-
-    valid_probabilities = perf.get("valid_probabilities", None)
-    if valid_probabilities is not None:
-        print(f"- Valid Probabilities: {'✓' if valid_probabilities else '❌'}")
-    else:
-        print("- Valid Probabilities: N/A")
-
-    model_stability = perf.get("model_stability", None)
-    if model_stability is not None:
-        print(f"- Model Stability: {'✓' if model_stability else '❌'}")
-    else:
-        print("- Model Stability: N/A")
-except Exception as e:
-    print(f"Error processing test results: {e}")
-ENDOFSCRIPT
+          echo '#!/usr/bin/env python3' > process_results.py
+          echo 'import json' >> process_results.py
+          echo 'try:' >> process_results.py
+          echo '    with open("test_results.json", "r") as f:' >> process_results.py
+          echo '        results = json.load(f)' >> process_results.py
+          echo '' >> process_results.py
+          echo '    arch = results.get("architecture", {})' >> process_results.py
+          echo '    perf = results.get("performance", {})' >> process_results.py
+          echo '' >> process_results.py
+          echo '    # Architecture Section' >> process_results.py
+          echo '    param_count = arch.get("parameter_count", None)' >> process_results.py
+          echo '    if param_count is not None:' >> process_results.py
+          echo '        print(f"- Parameter Count: {param_count:,} {\'✓\' if param_count < 20000 else \'❌ Exceeds 20k\'}")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Parameter Count: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    batch_norm_count = arch.get("batch_norm_count", None)' >> process_results.py
+          echo '    if batch_norm_count is not None:' >> process_results.py
+          echo '        print(f"- Batch Normalization Layers: {batch_norm_count} ✓")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Batch Normalization Layers: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    dropout_probs = arch.get("dropout_probs", [None])' >> process_results.py
+          echo '    if dropout_probs[0] is not None:' >> process_results.py
+          echo '        print(f"- Dropout Probability: {dropout_probs[0]} ✓")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Dropout Probability: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    has_fc = arch.get("has_fc", None)' >> process_results.py
+          echo '    if has_fc is not None:' >> process_results.py
+          echo '        print(f"- Architecture: {\'FC\' if has_fc else \'GAP\'} ✓")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Architecture: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    output_shape = arch.get("output_shape", None)' >> process_results.py
+          echo '    if output_shape is not None:' >> process_results.py
+          echo '        print(f"- Output Shape: {output_shape} ✓")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Output Shape: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    print("\\n### Performance Tests")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    device = perf.get("device", None)' >> process_results.py
+          echo '    if device is not None:' >> process_results.py
+          echo '        print(f"- Device: {device}")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Device: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    inference_time = perf.get("inference_time", None)' >> process_results.py
+          echo '    if inference_time is not None:' >> process_results.py
+          echo '        print(f"- Inference Time: {inference_time}ms ✓")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Inference Time: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    valid_probabilities = perf.get("valid_probabilities", None)' >> process_results.py
+          echo '    if valid_probabilities is not None:' >> process_results.py
+          echo '        print(f"- Valid Probabilities: {\'✓\' if valid_probabilities else \'❌\'}")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Valid Probabilities: N/A")' >> process_results.py
+          echo '' >> process_results.py
+          echo '    model_stability = perf.get("model_stability", None)' >> process_results.py
+          echo '    if model_stability is not None:' >> process_results.py
+          echo '        print(f"- Model Stability: {\'✓\' if model_stability else \'❌\'}")' >> process_results.py
+          echo '    else:' >> process_results.py
+          echo '        print("- Model Stability: N/A")' >> process_results.py
+          echo 'except Exception as e:' >> process_results.py
+          echo '    print(f"Error processing test results: {e}")' >> process_results.py
           chmod +x process_results.py
 
       - name: Generate Test Report
