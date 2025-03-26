@@ -1,0 +1,73 @@
+name: Model Requirements Validation
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch torchvision
+        
+    - name: Validate Model Requirements
+      run: |
+        python - <<EOF
+        import torch
+        from model import Net
+        
+        def validate_model():
+            print("Starting model validation...")
+            model = Net()
+            
+            # 1. Check parameter count
+            param_count = sum(p.numel() for p in model.parameters())
+            print(f"\n1. Parameter Count Check:")
+            print(f"Total parameters: {param_count:,}")
+            assert param_count < 20000, f"Model has {param_count:,} parameters, exceeding limit of 20,000"
+            print("✓ Parameter count is within limit")
+            
+            # 2. Check for Batch Normalization
+            has_bn = any(isinstance(m, torch.nn.BatchNorm2d) for m in model.modules())
+            print("\n2. Batch Normalization Check:")
+            assert has_bn, "Model must use Batch Normalization"
+            bn_count = sum(1 for m in model.modules() if isinstance(m, torch.nn.BatchNorm2d))
+            print(f"✓ Found {bn_count} Batch Normalization layers")
+            
+            # 3. Check for Dropout
+            has_dropout = any(isinstance(m, torch.nn.Dropout) for m in model.modules())
+            print("\n3. Dropout Check:")
+            assert has_dropout, "Model must use Dropout"
+            dropout_layers = [m for m in model.modules() if isinstance(m, torch.nn.Dropout)]
+            print(f"✓ Found Dropout with probability: {[layer.p for layer in dropout_layers]}")
+            
+            # 4. Check for FC layer or GAP
+            has_fc = any(isinstance(m, torch.nn.Linear) for m in model.modules())
+            has_gap = any(isinstance(m, torch.nn.AdaptiveAvgPool2d) for m in model.modules())
+            print("\n4. Architecture Check:")
+            assert has_fc or has_gap, "Model must use either Fully Connected layer or Global Average Pooling"
+            if has_fc:
+                fc_layers = [m for m in model.modules() if isinstance(m, torch.nn.Linear)]
+                print(f"✓ Found {len(fc_layers)} Fully Connected layers")
+            if has_gap:
+                print("✓ Found Global Average Pooling")
+            
+            print("\n✓ All requirements passed!")
+            return True
+        
+        if __name__ == "__main__":
+            validate_model()
+        EOF
+
+    - name: Check Model Architecture
+      run: |
+        echo "Model architecture validation completed successfully!" 
