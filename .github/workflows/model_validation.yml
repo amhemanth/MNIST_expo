@@ -31,15 +31,10 @@ jobs:
         id: run_tests
         run: python -m unittest test_model.py -v
 
-      - name: Generate Test Report
+      - name: Create Results Processing Script
         if: always()
         run: |
-          if [ -f test_results.json ]; then
-            echo "## Model Validation Results" >> "$GITHUB_STEP_SUMMARY"
-            echo "### Architecture Tests" >> "$GITHUB_STEP_SUMMARY"
-            
-            # Create Python script
-            cat > process_results.py << EOF
+          cat > process_results.py << 'ENDOFSCRIPT'
 #!/usr/bin/env python3
 import json
 try:
@@ -107,12 +102,15 @@ try:
         print("- Model Stability: N/A")
 except Exception as e:
     print(f"Error processing test results: {e}")
-EOF
+ENDOFSCRIPT
+          chmod +x process_results.py
 
-            # Make script executable
-            chmod +x process_results.py
-            
-            # Execute the script
+      - name: Generate Test Report
+        if: always()
+        run: |
+          if [ -f test_results.json ]; then
+            echo "## Model Validation Results" >> "$GITHUB_STEP_SUMMARY"
+            echo "### Architecture Tests" >> "$GITHUB_STEP_SUMMARY"
             ./process_results.py >> "$GITHUB_STEP_SUMMARY"
           else
             echo "⚠️ No test results file found" >> "$GITHUB_STEP_SUMMARY"
