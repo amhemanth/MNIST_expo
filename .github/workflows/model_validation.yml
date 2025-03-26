@@ -39,75 +39,75 @@ jobs:
             echo "## Model Validation Results" >> "$GITHUB_STEP_SUMMARY"
             echo "### Architecture Tests" >> "$GITHUB_STEP_SUMMARY"
             python3 << 'END_PYTHON' >> "$GITHUB_STEP_SUMMARY"
-            import json
+import json
 
-            try:
-                with open('test_results.json', 'r') as f:
-                    results = json.load(f)
+try:
+    with open('test_results.json', 'r') as f:
+        results = json.load(f)
 
-                arch = results.get('architecture', {})
-                perf = results.get('performance', {})
+    arch = results.get('architecture', {})
+    perf = results.get('performance', {})
 
-                # Architecture Section
-                param_count = arch.get('parameter_count', None)
-                if param_count is not None:
-                    print(f"- Parameter Count: {param_count:,} {'✓' if param_count < 20000 else '❌ Exceeds 20k'}")
-                else:
-                    print("- Parameter Count: N/A")
+    # Architecture Section
+    param_count = arch.get('parameter_count', None)
+    if param_count is not None:
+        print(f"- Parameter Count: {param_count:,} {'✓' if param_count < 20000 else '❌ Exceeds 20k'}")
+    else:
+        print("- Parameter Count: N/A")
 
-                batch_norm_count = arch.get('batch_norm_count', None)
-                if batch_norm_count is not None:
-                    print(f"- Batch Normalization Layers: {batch_norm_count} ✓")
-                else:
-                    print("- Batch Normalization Layers: N/A")
+    batch_norm_count = arch.get('batch_norm_count', None)
+    if batch_norm_count is not None:
+        print(f"- Batch Normalization Layers: {batch_norm_count} ✓")
+    else:
+        print("- Batch Normalization Layers: N/A")
 
-                dropout_probs = arch.get('dropout_probs', [None])
-                if dropout_probs[0] is not None:
-                    print(f"- Dropout Probability: {dropout_probs[0]} ✓")
-                else:
-                    print("- Dropout Probability: N/A")
+    dropout_probs = arch.get('dropout_probs', [None])
+    if dropout_probs[0] is not None:
+        print(f"- Dropout Probability: {dropout_probs[0]} ✓")
+    else:
+        print("- Dropout Probability: N/A")
 
-                has_fc = arch.get('has_fc', None)
-                if has_fc is not None:
-                    print(f"- Architecture: {'FC' if has_fc else 'GAP'} ✓")
-                else:
-                    print("- Architecture: N/A")
+    has_fc = arch.get('has_fc', None)
+    if has_fc is not None:
+        print(f"- Architecture: {'FC' if has_fc else 'GAP'} ✓")
+    else:
+        print("- Architecture: N/A")
 
-                output_shape = arch.get('output_shape', None)
-                if output_shape is not None:
-                    print(f"- Output Shape: {output_shape} ✓")
-                else:
-                    print("- Output Shape: N/A")
+    output_shape = arch.get('output_shape', None)
+    if output_shape is not None:
+        print(f"- Output Shape: {output_shape} ✓")
+    else:
+        print("- Output Shape: N/A")
 
-                print("\n### Performance Tests")
+    print("\n### Performance Tests")
 
-                device = perf.get('device', None)
-                if device is not None:
-                    print(f"- Device: {device}")
-                else:
-                    print("- Device: N/A")
+    device = perf.get('device', None)
+    if device is not None:
+        print(f"- Device: {device}")
+    else:
+        print("- Device: N/A")
 
-                inference_time = perf.get('inference_time', None)
-                if inference_time is not None:
-                    print(f"- Inference Time: {inference_time}ms ✓")
-                else:
-                    print("- Inference Time: N/A")
+    inference_time = perf.get('inference_time', None)
+    if inference_time is not None:
+        print(f"- Inference Time: {inference_time}ms ✓")
+    else:
+        print("- Inference Time: N/A")
 
-                valid_probabilities = perf.get('valid_probabilities', None)
-                if valid_probabilities is not None:
-                    print(f"- Valid Probabilities: {'✓' if valid_probabilities else '❌'}")
-                else:
-                    print("- Valid Probabilities: N/A")
+    valid_probabilities = perf.get('valid_probabilities', None)
+    if valid_probabilities is not None:
+        print(f"- Valid Probabilities: {'✓' if valid_probabilities else '❌'}")
+    else:
+        print("- Valid Probabilities: N/A")
 
-                model_stability = perf.get('model_stability', None)
-                if model_stability is not None:
-                    print(f"- Model Stability: {'✓' if model_stability else '❌'}")
-                else:
-                    print("- Model Stability: N/A")
-            except Exception as e:
-                print(f"Error processing test results: {e}")
-            END_PYTHON
-          else then
+    model_stability = perf.get('model_stability', None)
+    if model_stability is not None:
+        print(f"- Model Stability: {'✓' if model_stability else '❌'}")
+    else:
+        print("- Model Stability: N/A")
+except Exception as e:
+    print(f"Error processing test results: {e}")
+END_PYTHON
+          else
             echo "⚠️ No test results file found" >> "$GITHUB_STEP_SUMMARY"
           fi
 
