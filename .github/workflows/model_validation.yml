@@ -37,7 +37,9 @@ jobs:
           if [ -f test_results.json ]; then
             echo "## Model Validation Results" >> "$GITHUB_STEP_SUMMARY"
             echo "### Architecture Tests" >> "$GITHUB_STEP_SUMMARY"
-            python3 -c '
+            
+            # Write Python script to file
+            cat > process_results.py << 'EOF'
 import json
 try:
     with open("test_results.json", "r") as f:
@@ -49,7 +51,7 @@ try:
     # Architecture Section
     param_count = arch.get("parameter_count", None)
     if param_count is not None:
-        print(f"- Parameter Count: {param_count:,} {"✓" if param_count < 20000 else "❌ Exceeds 20k"}")
+        print(f"- Parameter Count: {param_count:,} {'✓' if param_count < 20000 else '❌ Exceeds 20k'}")
     else:
         print("- Parameter Count: N/A")
 
@@ -67,7 +69,7 @@ try:
 
     has_fc = arch.get("has_fc", None)
     if has_fc is not None:
-        print(f"- Architecture: {"FC" if has_fc else "GAP"} ✓")
+        print(f"- Architecture: {'FC' if has_fc else 'GAP'} ✓")
     else:
         print("- Architecture: N/A")
 
@@ -93,18 +95,21 @@ try:
 
     valid_probabilities = perf.get("valid_probabilities", None)
     if valid_probabilities is not None:
-        print(f"- Valid Probabilities: {"✓" if valid_probabilities else "❌"}")
+        print(f"- Valid Probabilities: {'✓' if valid_probabilities else '❌'}")
     else:
         print("- Valid Probabilities: N/A")
 
     model_stability = perf.get("model_stability", None)
     if model_stability is not None:
-        print(f"- Model Stability: {"✓" if model_stability else "❌"}")
+        print(f"- Model Stability: {'✓' if model_stability else '❌'}")
     else:
         print("- Model Stability: N/A")
 except Exception as e:
     print(f"Error processing test results: {e}")
-' >> "$GITHUB_STEP_SUMMARY"
+EOF
+
+            # Execute the script
+            python3 process_results.py >> "$GITHUB_STEP_SUMMARY"
           else
             echo "⚠️ No test results file found" >> "$GITHUB_STEP_SUMMARY"
           fi
