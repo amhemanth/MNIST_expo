@@ -104,9 +104,10 @@ try:
         print(f"- Model Stability: {'✓' if model_stability else '❌'}")
     else:
         print("- Model Stability: N/A")
-
-    END_PYTHON # Correct indentation here
-          else
+except Exception as e:
+    print(f"Error processing test results: {e}")
+END_PYTHON
+          else then
             echo "⚠️ No test results file found" >> "$GITHUB_STEP_SUMMARY"
           fi
 
