@@ -90,6 +90,46 @@ Final Test Accuracy: ~99.4%
 Total number of parameters: <20k
 ```
 
+## Testing
+
+Run the test suite to validate model architecture and performance:
+
+```bash
+python test_model.py
+```
+
+The tests verify:
+
+1. Architecture Requirements:
+   - Parameter count < 20k
+   - Presence of Batch Normalization
+   - Presence of Dropout
+   - Use of FC layer or GAP
+   - Correct output shapes
+
+2. Performance Metrics:
+   - Valid probability distributions
+   - Inference speed
+   - Model stability
+   - Batch processing capability
+
+Expected test output:
+```
+test_architecture (TestModelArchitecture) ... ok
+test_batch_normalization (TestModelArchitecture) ... ok
+test_dropout (TestModelArchitecture) ... ok
+test_forward_pass (TestModelArchitecture) ... ok
+test_parameter_count (TestModelArchitecture) ... ok
+test_batch_inference_speed (TestModelPerformance) ... ok
+test_model_output_range (TestModelPerformance) ... ok
+test_model_stability (TestModelPerformance) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in Xs
+
+OK
+```
+
 ## Model Details
 
 Layer-wise dimensions:
