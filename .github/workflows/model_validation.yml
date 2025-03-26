@@ -8,6 +8,10 @@ jobs:
   test:  # Job ID
     runs-on: ubuntu-latest  # Specifies the runner environment
     
+    # Add permissions for writing to the workspace
+    permissions:
+      contents: write
+    
     steps:
     # Step 1: Check out the repository code
     - uses: actions/checkout@v3  # Latest version of checkout action
@@ -25,21 +29,26 @@ jobs:
         python -m pip install --upgrade pip  # Upgrade pip
         pip install -r requirements.txt  # Install project requirements
         
-    # Step 4: Run architecture validation tests
+    # Step 4: Prepare data directory
+    - name: Create data directory
+      run: |
+        mkdir -p data
+        
+    # Step 5: Run architecture validation tests
     - name: Run Model Architecture Tests
       run: |
         echo "Running architecture validation tests..."
         # Run only architecture-related tests with verbose output
         python -m unittest test_model.py -k TestModelArchitecture -v
         
-    # Step 5: Run performance validation tests
+    # Step 6: Run performance validation tests
     - name: Run Model Performance Tests
       run: |
         echo "Running performance validation tests..."
         # Run only performance-related tests with verbose output
         python -m unittest test_model.py -k TestModelPerformance -v
         
-    # Step 6: Perform static analysis of the model
+    # Step 7: Perform static analysis of the model
     - name: Static Model Validation
       run: |
         # Execute Python code directly in the workflow
@@ -102,7 +111,7 @@ jobs:
             validate_model()
         EOF
 
-    # Step 7: Generate a summary report of all tests
+    # Step 8: Generate a summary report of all tests
     # This step runs even if previous steps fail (if: always())
     - name: Generate Test Report
       if: always()

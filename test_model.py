@@ -57,7 +57,10 @@ class TestModelPerformance(unittest.TestCase):
             transforms.Normalize((0.1307,), (0.3081,))
         ])
         
-        cls.test_data = datasets.MNIST('../data', train=False, transform=transform)
+        # Added download=True to ensure dataset is available
+        cls.test_data = datasets.MNIST('../data', train=False, 
+                                     transform=transform, 
+                                     download=True)
         cls.test_loader = torch.utils.data.DataLoader(cls.test_data, batch_size=cls.batch_size)
 
     def test_model_output_range(self):
