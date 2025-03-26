@@ -81,7 +81,7 @@ jobs:
     # Step 7: Upload test results as artifact
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v3  # Latest stable version
+      uses: actions/upload-artifact@main  # Using main branch version
       with:
         name: test-results
         path: test_results.json
